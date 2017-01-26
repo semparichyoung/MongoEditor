@@ -1,0 +1,129 @@
+#Databases {
+	float: left;
+	width: 250px;
+	margin-left: 20px;
+}
+.db {
+
+}
+
+.Collections {
+	margin-left: 10px;
+	margin-bottom: 20px;
+}
+.collection {
+	margin: 5px 0;
+}
+.reloadCollection {
+	display: inline;
+	margin-left: 10px;
+	cursor: pointer;
+}
+
+#DocumentsDiv {
+	float: left;
+	overflow: scroll;
+	width: calc(100% - 290px);
+}
+.Documents {
+	width: 100%;
+}
+
+.document, .documentHeader {
+	clear: both;
+}
+.document:nth-child(odd) {
+	background-color: #eee;
+}
+
+.field {
+	padding: 5px;
+}
+
+.fieldAry .fieldValue {
+	width: 100%;
+	border-bottom: 1px solid #555;
+}
+
+.fieldKey {
+	float: left;
+}
+
+.fieldValue {
+	width: 100%;
+	min-height: 16px;
+	float: left;
+	white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fieldValue>.fieldValue>.fieldValue {
+	display: inline;
+	float: none;
+}
+
+.model {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1000;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.5);
+}
+#editInputDiv {
+	margin-left: 25%;
+	margin-top: 25%;
+	max-width: 30%;
+	max-height: 30%;
+	height: 50%;
+}
+#editInput {
+	width: 100%;
+}
+
+
+#header {
+	margin-bottom: 20px;
+}
+#search {
+	width: 70%;
+}
+#searchBar {
+	margin: 0 auto;
+	width: 90%;
+}
+#advanced {
+	margin-left: 10px;
+	font-size: 16px;
+	cursor: pointer;
+}
+#advancedSearch .advConds {
+	margin: 10px 0;
+}
+#advancedSearch .advConds:nth-of-type(1) .selAndor {
+	opacity: 0;
+}
+#advancedSearch .advConds select {
+	margin: 0 5px;
+	font-size: 18px;
+}
+#advancedSearch .advConds input {
+	width: 50%;
+}
+#advancedSearch .glyphicon-minus-sign {
+	font-size: 18px;
+	top: 4px;
+	margin-left: 10px;
+	cursor: pointer;
+}
+
+.invisible {
+	display: none;
+}
+.alpha {
+	opacity: 0.5;
+}
+.inline {
+	display: inline;
+}

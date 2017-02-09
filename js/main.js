@@ -66,10 +66,15 @@ $(function() {
 				type: "POST",
 				success: function(res) {
 					// console.log(res);
-					try {
-						res = JSON.parse(res);
-					}catch(e) {
-						console.log(res);
+					if(typeof res == "string") {
+						try {
+							res = JSON.parse(res);
+						}catch(e) {
+							console.log("can't json:", res);
+							documents.html("<h2>Oops, there are some problem here. (success but not JSON)</h2>");
+							nowLoading(false);
+							return;
+						}
 					}
 					// console.log(res);
 					var data = res["data"];
@@ -85,9 +90,9 @@ $(function() {
 					var index = 1;
 					documents.append("<tr class='documentHeader'></tr>");
 					var headerF = false;
-					var documentHeader = "<th class='field fieldIndex'><div class='fieldValue noEdit'>No</div></th>";
+					var documentHeader = "<td class='field fieldIndex'><div class='fieldValue noEdit'>No</div></td>";
 					$.each(type, function(k, v) {
-						documentHeader += "<th class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "</div></th>";
+						documentHeader += "<td class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "</div></td>";
 						keyAry.push(k);
 					});
 					documents.find(".documentHeader").append(documentHeader);
@@ -165,15 +170,7 @@ $(function() {
 					fieldClass += "noEdit";
 					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
 				}else {
-					field = "<div class='fieldValue noEdit folder' key='" + key + "' type='" + type + "'>array(" + Object.keys(val, key).length + ")";
-					fieldClass += "invisible";
-					for(var i in val) {
-						if(typeof type[i] == "undefined") {
-							console.log(type);
-						}
-						field += "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "' ary><div class='fieldKey'>" + i + "</div> => " + makeField(val[i], key, type[i]) + "</div>";
-					}
-					field += "</div>"
+					field = makeAryField(val, key, type);
 				}
 /*
 				field = "<div class='fieldAry'>"
@@ -187,7 +184,20 @@ $(function() {
 				break;
 		}
 		return field;
-
+	}
+	function makeAryField(val, key, type) {
+		var field = "<div class='fieldValue noEdit folder' key='" + key + "' type='" + type + "'>array(" + Object.keys(val, key).length + ")<br>";
+		var fieldClass = "invisible";
+		for(var i in val) {
+			var tmpType = type;
+			if(typeof type == "object" && typeof type[i] != "undefined") {
+				tmpType = type[i];
+				// fieldClass += " noEdit";
+			}
+			field += "<div class='" + fieldClass + "' key='" + key + "' type='" + tmpType + "' ary><div class='fieldKey'>" + i + "</div> => " + makeField(val[i], key, tmpType) + "</div>";
+		}
+		field += "</div>";
+		return field;
 	}
 
 	$("#DocumentsDiv").on("click", ".fieldValue:not(.noEdit)", function(e) {
@@ -199,9 +209,12 @@ $(function() {
 		var $this = $(this);
 		editModel.removeClass("invisible");
 		editKey = $this.attr("key");
-		if(typeof $this.parent().attr("ary") != "undefined") {
-			editKey = editKey + "." + $this.siblings('.fieldKey').text();
-		}
+
+		// if(typeof $this.parent().attr("ary") != "undefined") {
+		// 	editKey = editKey + "." + $this.siblings('.fieldKey').text();
+		// }
+		getEditKey($this);
+
 		$("#editInput").val($this.html()).removeClass("invisible");
 		$("#datepicker").addClass("invisible");
 		editField = $this;
@@ -217,9 +230,12 @@ $(function() {
 		}
 		var $this = $(this);
 		editKey = $this.attr("key");
-		if(typeof $this.parent().attr("ary") != "undefined") {
-			editKey = editKey + "." + $this.siblings('.fieldKey').text();
-		}
+
+		// if(typeof $this.parent().attr("ary") != "undefined") {
+		// 	editKey = editKey + "." + $this.siblings('.fieldKey').text();
+		// }
+		getEditKey($this);
+
 		$("#datepicker").val($this.html()).removeClass("invisible");
 		$("#editInput").addClass("invisible");
 		editField = $this;
@@ -228,9 +244,22 @@ $(function() {
 
 		editModel.removeClass("invisible");
 		// $("#datepicker").datetimepicker("show");
-	})
+	});
+	function getEditKey($this) {
+		var tmpPrt = $this.parent();
+		var keyAry = [];
+		while(typeof tmpPrt.attr("ary") != "undefined") {
+			keyAry.push(tmpPrt.children(".fieldKey").text());
+			$this = tmpPrt;
+			tmpPrt = $this.parent().parent();
+		}
+		keyAry.push(editKey);
+		editKey = keyAry.reverse().join(".");
+		console.log(editKey);
+	}
 
 	$("#DocumentsDiv").on("click", ".fieldValue.folder", function(e) {
+		e.stopPropagation();
 		$(this).children().toggleClass("invisible");
 	})
 
@@ -244,13 +273,21 @@ $(function() {
 			input = $("#datepicker");
 			val = Math.floor((new Date(input.val())).getTime() / 1000);
 		}else {
-			input = $("#editInput")
+			input = $("#editInput");
 			val = input.val();
 		}
 
 
-		console.log("save:", {DB: DB, CL: CL, ID: editID, val: val, key: editKey, type: editType});
-		$.post("lib/saveData.php", {DB: DB, CL: CL, ID: editID, val: val, key: editKey, type: editType}, function(e) {
+		var postData = {
+			DB: DB,
+			CL: CL,
+			ID: editID,
+			val: val,
+			key: editKey,
+			type: editType,
+		}
+		console.log("save:", postData);
+		$.post("lib/saveData.php", postData, function(e) {
 			if(editType == "date") {
 				var tmp = val * 1000;
 				val = {"$date" : {"$numberLong" : tmp}};
@@ -263,6 +300,9 @@ $(function() {
 	$("body").on("keyup", function(e) {
 		if(e.keyCode == 27 && !editModel.hasClass("invisible")) {
 			editModel.addClass("invisible");
+		}
+		if(e.keyCode > 48 && e.keyCode < 58) {
+			// $.moveColumn($(".Documents:visible"), 1, e.keyCode - 48);
 		}
 	});
 
@@ -302,9 +342,9 @@ $(function() {
 		}
 	}
 /*
-======================================================
-==================== Search Start ====================
-======================================================
+===============================================================
+==================== Search Function Start ====================
+===============================================================
 */
 
 	$(".db").on("input", ".searchCollection", function(e) {
@@ -489,3 +529,12 @@ $(function() {
 		format: "Y-m-d H:m:s"
 	});
 });
+
+$.moveColumn = function (table, from, to) {
+    var rows = jQuery('tr', table);
+    var cols;
+    rows.each(function() {
+        cols = jQuery(this).children('th, td');
+        cols.eq(from).detach().insertBefore(cols.eq(to));
+    });
+}

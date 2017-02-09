@@ -7,6 +7,10 @@
 
 }
 
+tr>td:nth-child(2) {
+	/* display: none; */
+}
+
 .Collections {
 	margin-left: 10px;
 	margin-bottom: 20px;
@@ -57,9 +61,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.fieldValue>.fieldValue>.fieldValue {
+.fieldKey+.fieldValue {
 	display: inline;
 	float: none;
+}
+.folder>* {
+	margin-left: 20px;
 }
 
 .model {

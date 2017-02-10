@@ -29,16 +29,24 @@ $(function() {
 				res = JSON.parse(res);
 				// console.log(res);
 				var HTML = "";
+				var agnHtml = "";
 				for (var i = res.length - 1; i >= 0; i--) {
 					var col = "";
+					var agnCol = "";
 					col = "<div id='" + res[i].name + "'class='collection'>" + res[i].name;
 					col += "<div class='reloadCollection'><span class='glyphicon glyphicon-refresh'></span></div></div>";
 					HTML = col + HTML;
+
+					agnCol = "<div id='" + res[i].name + "'class='assignCol'>" + res[i].name + "</div>";
+					agnHtml = agnCol + agnHtml;
 				}
 				HTML = "<input class='searchCollection' placeholder='Search Collections'>" + HTML;
+				agnHtml = "<div id='assignBackToCollections'><span class='glyphicon glyphicon-arrow-left'></div>" + agnHtml;
 				$this.find(".Collections").html(HTML).fadeIn(150, function(e) {
 					nowLoading(false);
 				});
+
+				$("#assignCollections").html(agnHtml);
 			});
 		}else if($this.find(".Collections").is(":visible")){
 			$this.find(".Collections").fadeOut(150);
@@ -59,76 +67,7 @@ $(function() {
 			$("#DocumentsDiv").append("<table id=dc_" + CL + " class='Documents table table-striped table-hover table-bordered'></table>");
 			var documents = $("#dc_" + CL);
 			nowLoading(true);
-			$.ajax({
-				url: "lib/getDocuments.php",
-				data: {DB: DB, CL: CL},
-				dataType: "json",
-				type: "POST",
-				success: function(res) {
-					// console.log(res);
-					if(typeof res == "string") {
-						try {
-							res = JSON.parse(res);
-						}catch(e) {
-							console.log("can't json:", res);
-							documents.html("<h2>Oops, there are some problem here. (success but not JSON)</h2>");
-							nowLoading(false);
-							return;
-						}
-					}
-					// console.log(res);
-					var data = res["data"];
-					var type = res["type"];
-					keyAry = [];
-
-					if(typeof data == "undefined") {
-						documents.html("<h2>No Data</h2>");
-						nowLoading(false);
-						return;
-					}
-
-					var index = 1;
-					documents.append("<tr class='documentHeader'></tr>");
-					var headerF = false;
-					var documentHeader = "<td class='field fieldIndex'><div class='fieldValue noEdit'>No</div></td>";
-					$.each(type, function(k, v) {
-						documentHeader += "<td class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "</div></td>";
-						keyAry.push(k);
-					});
-					documents.find(".documentHeader").append(documentHeader);
-					documents = documents.find("tbody");
-
-					var dataLen = data.length;
-					for(var k in data) {
-						// nowLoading(k, dataLen);   //too lag to use this.
-						var v = data[k];
-						var HTML = "<tr class='document' id='" + v["_id"]["$oid"] + "'>";
-						HTML += "<td class='field fieldIndex'>" + index + "</td>";
-						for(var i in type) {
-							if(typeof i != "undefined") {
-								HTML += "<td class='field'>" + makeField(v[i], i, type[i]) + "</td>";
-							}else {
-								HTML += "<td class='field'></td>";
-							}
-						}
-						HTML += "</tr>";
-						index++;
-						documents.append(HTML);
-					}
-					window.scrollTo(0, 0);
-					nowLoading(false);
-				},
-				statusCode: {
-					500: function() {
-						documents.html("<h2>Oops, there are some problem here. By statusCode</h2>");
-						nowLoading(false);
-					}
-				},
-				error: function() {
-					documents.html("<h2>Oops, there are some problem here. By error</h2>");
-					nowLoading(false);
-				}
-			});
+			getDocuments(documents);
 		}else {
 			$("#dc_" + CL).removeClass("invisible");
 			window.scrollTo(0, 0);
@@ -142,7 +81,7 @@ $(function() {
 		var t = $("#dc_" + collection.attr("id")).remove();
 		collection.click();
 	});
-	var numb = 0;
+	
 	function makeField(val, key, type) {
 		var field = "";
 		var fieldClass = "fieldValue ";
@@ -164,21 +103,14 @@ $(function() {
 					if(key == "_id") {
 						fieldClass += "noEdit";
 					}
-					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
+					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "' mongoID>" + val + "</div>";
 				}else if(typeof val["$date"] != "undefined") {
 					val = getFormatDate(val["$date"]["$numberLong"]);
 					// fieldClass += "noEdit";
-					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
+					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "' mongoDate>" + val + "</div>";
 				}else {
 					field = makeAryField(val, key, type);
 				}
-/*
-				field = "<div class='fieldAry'>"
-				$.each(val, function(k, v) {
-					field += "<div class='aryField'><div class='fieldKey'>" + k + "</div>" + makeField(v, key) + "</div>";
-				})
-				field += "</div>";
-				*/
 				break;
 			default:
 				break;
@@ -212,17 +144,25 @@ $(function() {
 
 		getEditKey($this);
 
-		if($this.attr("type") == "date") {
+		var editDocument = $this.closest(".document");
+
+		$("#editInput").addClass("invisible");
+		$("#datepicker").addClass("invisible");
+		$("#editAssignDiv").addClass("invisible");
+		if(typeof $this.attr("mongoDate") != "undefined") {
 			$("#datepicker").val($this.html()).removeClass("invisible");
-			$("#editInput").addClass("invisible");
+		}else if(typeof $this.attr("mongoID") != "undefined") {
+			$("#assignTargetHeader").html(editDocument.siblings(".documentHeader").html());
+			$("#assignTargetBody").html(editDocument.html());
+
+			$("#editAssignDiv").removeClass("invisible");
 		}else {
 			$("#editInput").val($this.html()).removeClass("invisible");
-			$("#datepicker").addClass("invisible");
 		}
 		editField = $this;
 		editType = $this.attr("type");
 
-		editID = $this.closest(".document").attr("id");
+		editID = editDocument.attr("id");
 	});
 
 	function getEditKey($this) {
@@ -241,7 +181,89 @@ $(function() {
 	$("#DocumentsDiv").on("click", ".fieldValue.folder", function(e) {
 		e.stopPropagation();
 		$(this).children().toggleClass("invisible");
-	})
+	});
+
+	$("#assignCollections").on("click", ".assignCol", function(e) {
+		var $this = $(this);
+		CL = $this.attr("id");
+		$("#assignCollections").html("<table id=ag_" + CL + " class='Documents table table-striped table-hover table-bordered'></table>");
+		var documents = $("#ag_" + CL);
+		nowLoading(true);
+		getDocuments(documents);
+	});
+
+	function getDocuments(documents) {
+		$.ajax({
+			url: "lib/getDocuments.php",
+			data: {DB: DB, CL: CL},
+			dataType: "json",
+			type: "POST",
+			success: function(res) {
+				// console.log(res);
+				if(typeof res == "string") {
+					try {
+						res = JSON.parse(res);
+					}catch(e) {
+						console.log("can't json:", res);
+						documents.html("<h2>Oops, there are some problem here. (success but not JSON)</h2>");
+						nowLoading(false);
+						return;
+					}
+				}
+				// console.log(res);
+				var data = res["data"];
+				var type = res["type"];
+				keyAry = [];
+
+				if(typeof data == "undefined") {
+					documents.html("<h2>No Data</h2>");
+					nowLoading(false);
+					return;
+				}
+
+				var index = 1;
+				documents.append("<tr class='documentHeader'></tr>");
+				var headerF = false;
+				var documentHeader = "<td class='field fieldIndex'><div class='fieldValue noEdit'>No</div></td>";
+				$.each(type, function(k, v) {
+					documentHeader += "<td class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "</div></td>";
+					keyAry.push(k);
+				});
+				documents.find(".documentHeader").append(documentHeader);
+				documents = documents.find("tbody");
+
+				var dataLen = data.length;
+				for(var k in data) {
+					// nowLoading(k, dataLen);   //too lag to use this.
+					var v = data[k];
+					var HTML = "<tr class='document' id='" + v["_id"]["$oid"] + "'>";
+					HTML += "<td class='field fieldIndex'>" + index + "</td>";
+					for(var i in type) {
+						if(typeof i != "undefined") {
+							HTML += "<td class='field'>" + makeField(v[i], i, type[i]) + "</td>";
+						}else {
+							HTML += "<td class='field'></td>";
+						}
+					}
+					HTML += "</tr>";
+					index++;
+					documents.append(HTML);
+				}
+				window.scrollTo(0, 0);
+				nowLoading(false);
+			},
+			statusCode: {
+				500: function() {
+					documents.html("<h2>Oops, there are some problem here. By statusCode</h2>");
+					nowLoading(false);
+				}
+			},
+			error: function() {
+				documents.html("<h2>Oops, there are some problem here. By error</h2>");
+				nowLoading(false);
+			}
+		});
+	}
 
 	$("#editInputBtn").on("click", function(e) {
 		if(loading) {

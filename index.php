@@ -64,6 +64,9 @@ foreach ($databases as $v) {
 			<input id="datepicker" class="invisible"/>
 			<button type="" id="editInputBtn">Update</button>
 		</div>
+		<div id="editAssignDiv">
+			<div id="assignCollections"></div>
+		</div>
 	</div>
 <!--
 	<div id="loadingModel" class="invisible model">

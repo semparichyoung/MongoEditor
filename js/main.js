@@ -167,7 +167,7 @@ $(function() {
 					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
 				}else if(typeof val["$date"] != "undefined") {
 					val = getFormatDate(val["$date"]["$numberLong"]);
-					fieldClass += "noEdit";
+					// fieldClass += "noEdit";
 					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
 				}else {
 					field = makeAryField(val, key, type);
@@ -210,41 +210,21 @@ $(function() {
 		editModel.removeClass("invisible");
 		editKey = $this.attr("key");
 
-		// if(typeof $this.parent().attr("ary") != "undefined") {
-		// 	editKey = editKey + "." + $this.siblings('.fieldKey').text();
-		// }
 		getEditKey($this);
 
-		$("#editInput").val($this.html()).removeClass("invisible");
-		$("#datepicker").addClass("invisible");
-		editField = $this;
-		editType = $this.attr("type");
-
-		editID = $this.closest(".document").attr("id");
-	});
-
-	$("#DocumentsDiv").on("click", ".fieldValue[type='date']", function(e) {
-		e.stopPropagation();
-		if(loading) {
-			return;
+		if($this.attr("type") == "date") {
+			$("#datepicker").val($this.html()).removeClass("invisible");
+			$("#editInput").addClass("invisible");
+		}else {
+			$("#editInput").val($this.html()).removeClass("invisible");
+			$("#datepicker").addClass("invisible");
 		}
-		var $this = $(this);
-		editKey = $this.attr("key");
-
-		// if(typeof $this.parent().attr("ary") != "undefined") {
-		// 	editKey = editKey + "." + $this.siblings('.fieldKey').text();
-		// }
-		getEditKey($this);
-
-		$("#datepicker").val($this.html()).removeClass("invisible");
-		$("#editInput").addClass("invisible");
 		editField = $this;
-		editID = $this.closest(".document").attr("id");
 		editType = $this.attr("type");
 
-		editModel.removeClass("invisible");
-		// $("#datepicker").datetimepicker("show");
+		editID = $this.closest(".document").attr("id");
 	});
+
 	function getEditKey($this) {
 		var tmpPrt = $this.parent();
 		var keyAry = [];
@@ -255,7 +235,7 @@ $(function() {
 		}
 		keyAry.push(editKey);
 		editKey = keyAry.reverse().join(".");
-		console.log(editKey);
+		// console.log(editKey);
 	}
 
 	$("#DocumentsDiv").on("click", ".fieldValue.folder", function(e) {
@@ -277,7 +257,6 @@ $(function() {
 			val = input.val();
 		}
 
-
 		var postData = {
 			DB: DB,
 			CL: CL,
@@ -292,7 +271,11 @@ $(function() {
 				var tmp = val * 1000;
 				val = {"$date" : {"$numberLong" : tmp}};
 			}
-			editField.html(makeField(val, editKey, editType));
+			if(editField.siblings(".fieldKey").length > 0) {
+				editField.html(val);
+			}else {
+				editField.html(makeField(val, editKey, editType));
+			}
 			editModel.addClass("invisible");
 		});
 	});

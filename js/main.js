@@ -85,8 +85,9 @@ $(function() {
 	function makeField(val, key, type) {
 		var field = "";
 		var fieldClass = "fieldValue ";
-		if(val == null) {
-			field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'></div>";
+		if(val === null || val === "") {
+			field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>";
+			field += "<span class='glyphicon glyphicon-plus'></div>";
 			return field;
 		}
 		switch(typeof val) {
@@ -98,14 +99,14 @@ $(function() {
 				field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "'>" + val + "</div>";
 				break;
 			case "object":
-				if(typeof val["$oid"] != "undefined") {
-					val = val["$oid"];
+				if(typeof val.$oid != "undefined") {
+					val = val.$oid;
 					if(key == "_id") {
 						fieldClass += "noEdit";
 					}
 					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "' mongoID>" + val + "</div>";
-				}else if(typeof val["$date"] != "undefined") {
-					val = getFormatDate(val["$date"]["$numberLong"]);
+				}else if(typeof val.$date != "undefined") {
+					val = getFormatDate(val.$date.$numberLong);
 					// fieldClass += "noEdit";
 					field = "<div class='" + fieldClass + "' key='" + key + "' type='" + type + "' mongoDate>" + val + "</div>";
 				}else {
@@ -139,30 +140,37 @@ $(function() {
 		}
 		// console.log("click");
 		var $this = $(this);
-		editModel.removeClass("invisible");
-		editKey = $this.attr("key");
-
-		getEditKey($this);
-
 		var editDocument = $this.closest(".document");
 
-		$("#editInput").addClass("invisible");
-		$("#datepicker").addClass("invisible");
-		$("#editAssignDiv").addClass("invisible");
-		if(typeof $this.attr("mongoDate") != "undefined") {
-			$("#datepicker").val($this.html()).removeClass("invisible");
-		}else if(typeof $this.attr("mongoID") != "undefined") {
-			$("#assignTargetHeader").html(editDocument.siblings(".documentHeader").html());
-			$("#assignTargetBody").html(editDocument.html());
+		if(editModel.hasClass("invisible")) {
+			editModel.removeClass("invisible");
+			editKey = $this.attr("key");
 
-			$("#editAssignDiv").removeClass("invisible");
+			getEditKey($this);
+
+			$("#editInput").addClass("invisible");
+			$("#datepicker").addClass("invisible");
+			$("#editAssignDiv").addClass("invisible");
+			$("#editInputDiv").addClass("invisible");
+			if(typeof $this.attr("mongoDate") != "undefined") {
+				$("#datepicker").val($this.html()).removeClass("invisible");
+				$("#editInputDiv").removeClass("invisible");
+			}else if(typeof $this.attr("mongoID") != "undefined") {
+				$("#assignTargetHeader").html(editDocument.siblings(".documentHeader").html());
+				$("#assignTargetBody").html(editDocument.html());
+
+				$("#editAssignDiv").removeClass("invisible");
+			}else {
+				$("#editInput").val($this.text()).removeClass("invisible");
+				$("#editInputDiv").removeClass("invisible");
+			}
+			editField = $this;
+			editType = $this.attr("type");
+
+			editID = editDocument.attr("id");
 		}else {
-			$("#editInput").val($this.html()).removeClass("invisible");
+			editDocument.toggleClass("active");
 		}
-		editField = $this;
-		editType = $this.attr("type");
-
-		editID = editDocument.attr("id");
 	});
 
 	function getEditKey($this) {
@@ -186,13 +194,22 @@ $(function() {
 	$("#assignCollections").on("click", ".assignCol", function(e) {
 		var $this = $(this);
 		CL = $this.attr("id");
-		$("#assignCollections").html("<table id=ag_" + CL + " class='Documents table table-striped table-hover table-bordered'></table>");
-		var documents = $("#ag_" + CL);
+		$("#assignDocuments").html("<table id=ag_" + CL + " class='Documents table table-striped table-hover table-bordered'></table>");
+		var documents = $("#ag_" + CL); 
 		nowLoading(true);
-		getDocuments(documents);
+		getDocuments(documents, function() {
+
+		});
+
+		$("#assignCollections").fadeOut(150);
 	});
 
-	function getDocuments(documents) {
+	$("#assignBackToCollections").on("click", function(e) {
+		$("#assignDocuments").html("");
+		$("#assignCollections").fadeIn(150);
+	});
+
+	function getDocuments(documents, callback) {
 		$.ajax({
 			url: "lib/getDocuments.php",
 			data: {DB: DB, CL: CL},
@@ -210,9 +227,9 @@ $(function() {
 						return;
 					}
 				}
-				// console.log(res);
-				var data = res["data"];
-				var type = res["type"];
+				console.log(res);
+				var data = res.data;
+				var type = res.type;
 				keyAry = [];
 
 				if(typeof data == "undefined") {
@@ -224,19 +241,19 @@ $(function() {
 				var index = 1;
 				documents.append("<tr class='documentHeader'></tr>");
 				var headerF = false;
-				var documentHeader = "<td class='field fieldIndex'><div class='fieldValue noEdit'>No</div></td>";
+				var documentHeader = "<td class='field fieldIndex'><div class='fieldValue noEdit'>No<span class='glyphicon'></span></div></td>";
 				$.each(type, function(k, v) {
-					documentHeader += "<td class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "</div></td>";
+					documentHeader += "<td class='field'><div class='fieldValue noEdit' title='" + v + "'>" + k + "<span class='glyphicon'></span></div></td>";
 					keyAry.push(k);
 				});
 				documents.find(".documentHeader").append(documentHeader);
 				documents = documents.find("tbody");
 
 				var dataLen = data.length;
-				for(var k in data) {
+				for(var k = 0; k < dataLen; k++) {
 					// nowLoading(k, dataLen);   //too lag to use this.
 					var v = data[k];
-					var HTML = "<tr class='document' id='" + v["_id"]["$oid"] + "'>";
+					var HTML = "<tr class='document' id='" + v._id.$oid + "'>";
 					HTML += "<td class='field fieldIndex'>" + index + "</td>";
 					for(var i in type) {
 						if(typeof i != "undefined") {
@@ -286,7 +303,7 @@ $(function() {
 			val: val,
 			key: editKey,
 			type: editType,
-		}
+		};
 		console.log("save:", postData);
 		$.post("lib/saveData.php", postData, function(e) {
 			if(editType == "date") {
@@ -325,7 +342,7 @@ $(function() {
 	}
 
 	function nowLoading(val, total) {
-		if(val === true || val == false) {
+		if(val === true || val === false) {
 			loading = val;
 			if(loading) {
 				$("#Databases").addClass("alpha");
@@ -356,8 +373,8 @@ $(function() {
 		// console.log("input search collections");
 		var $this = $(this);
 		var $tr = $this.siblings(".collection");
-		if($this.val() == "") {
-			$tr.removeClass("invisible")
+		if($this.val() === "") {
+			$tr.removeClass("invisible");
 		}else {
 			$tr.addClass("invisible");
 		}
@@ -375,15 +392,15 @@ $(function() {
 	$("#search").on("input", function(e) {
 		var $this = $(this);
 		var $tr = $("tbody tr");
-		if($this.val() == "") {
-			$tr.removeClass("invisible")
+		if($this.val() === "") {
+			$tr.removeClass("invisible");
 		}else {
 			$tr.addClass("invisible");
 		}
 		$tr.each(function(e) {
 			var $t = $(this);
 			var str = $t.map(function(e) {
-				return $(this).text()
+				return $(this).text();
 			}).get().join(",");
 			if(str.indexOf($this.val()) >= 0) {
 				$t.removeClass("invisible");
@@ -425,18 +442,18 @@ $(function() {
 			var val = v.find(".advancedInput").val();
 			for (var j = 0, len = review.length; j < len; j++) {
 				if(typeof ary[j] == "undefined") ary[j] = true;
-				var v = review.eq(j);
+				var rev = review.eq(j);
 				if(ary[j] === false && andor == "and" || (ary[j] === true && andor == "or")) {
 					if(i == l - 1) {
 						if(ary[j] === false) {
-							v.fadeOut(100);
+							rev.fadeOut(100);
 						}else {
-							v.fadeIn(100);
+							rev.fadeIn(100);
 						}
 					}
 					continue;
 				}else if(ary[j] === true || andor == "or"){
-					var chil = v.children().eq(loc);
+					var chil = rev.children().eq(loc);
 					if(chil.children('.folder').length > 0) {
 						chil = chil.children('.folder').children().children();
 						ary[j] = false;
@@ -449,9 +466,9 @@ $(function() {
 				}
 				if(i == l - 1) {
 					if(ary[j]) {
-						v.fadeIn(100);
+						rev.fadeIn(100);
 					}else {
-						v.fadeOut(100);
+						rev.fadeOut(100);
 					}
 				}
 			}
@@ -462,25 +479,18 @@ $(function() {
 			switch (cond) {
 				case 'equal':
 					return val == target;
-					break;
 				case 'greater':
 					return val < target;
-					break;
 				case 'less':
 					return val > target;
-					break;
 				case 'contain':
 					return target.indexOf(val) >= 0;
-					break;
 				case 'notContain':
 					return target.indexOf(val) < 0;
-					break;
 				case 'start':
-					return target.indexOf(val) == 0;
-					break;
+					return target.indexOf(val) === 0;
 				case 'end':
 					return target.substr(-val.length) == val;
-					break;
 				default :
 					return false;
 			}
@@ -535,6 +545,44 @@ $(function() {
 	});
 });
 
+
+/*
+	Sort Start
+*/
+$("#DocumentsDiv").on("click", ".documentHeader .field", function(e) {
+		var $t = $(this);
+		console.log($t);
+		if($t.find("input").length > 0 || $t.find("button").length > 0) return true;
+		var $s = $t.find(".glyphicon");
+		console.log($s);
+		var index = $t.index();
+		var inverse;
+		if($s.hasClass("glyphicon-triangle-bottom")) {
+			inverse = true;
+		}else {
+			inverse = false;
+		}
+		$t.closest('table')
+			.find('.document .field')
+			.filter(function(){
+				return $(this).index() === index;
+			})
+		.sortElements(function(a, b){
+			return inverse ? naturalCompare($(a).text(), $(b).text()) : 
+				naturalCompare($(b).text(), $(a).text());
+
+		}, function(){
+			return this.parentNode;
+		});
+
+		$(".documentHeader span").removeClass("glyphicon-triangle-top glyphicon-triangle-bottom");
+		if(!inverse) {
+			$s.addClass("glyphicon-triangle-bottom");
+		}else {
+			$s.addClass("glyphicon-triangle-top");
+		}
+	});
+
 $.moveColumn = function (table, from, to) {
     var rows = jQuery('tr', table);
     var cols;
@@ -542,4 +590,4 @@ $.moveColumn = function (table, from, to) {
         cols = jQuery(this).children('th, td');
         cols.eq(from).detach().insertBefore(cols.eq(to));
     });
-}
+};

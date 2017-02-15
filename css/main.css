@@ -1,14 +1,14 @@
+body {
+	height: 100vh;
+	overflow: hidden;
+}
+
 #Databases {
 	float: left;
 	width: 250px;
 	margin-left: 20px;
-}
-.db {
-
-}
-
-tr>td:nth-child(2) {
-	/* display: none; */
+	height: 100%;
+	overflow: scroll;
 }
 
 .Collections {
@@ -28,6 +28,7 @@ tr>td:nth-child(2) {
 	float: left;
 	overflow: scroll;
 	width: calc(100% - 290px);
+	height: 100%;
 }
 .Documents {
 	width: 100%;
@@ -44,11 +45,6 @@ tr>td:nth-child(2) {
 	padding: 5px;
 }
 
-.fieldAry .fieldValue {
-	width: 100%;
-	border-bottom: 1px solid #555;
-}
-
 .fieldKey {
 	float: left;
 }
@@ -61,6 +57,12 @@ tr>td:nth-child(2) {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.folder .fieldValue:hover {
+	cursor: pointer;
+	background-color: #fcc;
+}
+
 .fieldKey+.fieldValue {
 	display: inline;
 	float: none;
@@ -89,16 +91,18 @@ tr>td:nth-child(2) {
 	width: 100%;
 }
 
-
-#header {
-	margin-bottom: 20px;
+#editAssignDiv {
+	width: 80%;
+	margin-left: 10vw;
+	height: 80%;
+	margin-top: 10vh;
+	background-color: #fff;
+	border-radius: 5px;
+	overflow: scroll;
 }
+
 #search {
 	width: 70%;
-}
-#searchBar {
-	margin: 0 auto;
-	width: 90%;
 }
 #advanced {
 	margin-left: 10px;

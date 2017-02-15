@@ -23,20 +23,12 @@ $databases = $mongo -> listDatabases();
 	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" rel="stylesheet">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 	<script src="js/main.js" type="text/javascript" charset="utf-8" async defer></script>
+	<script src="js/sort.js" type="text/javascript" charset="utf-8" async defer></script>
+	<script src="js/shel.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
 
-	<div id="header">
-		<div id="searchBar">
-			<div id="normalSearch">
-				<h3 class="inline"> Search</h3>
-				<input type="text" name="search" id="search" placeholder="Search fields in documents(Did not work before choose a collection)" />
-				<span id="advanced" class="inline">Advanced</span>
-			</div><!-- END: #normalSearch -->
-			<div id="advancedSearch" style="display: none">
-			</div><!--END: . #advancedInput-->
-		</div><!-- END: #searchBar -->
-	</div>
+	
 	<div id="Databases">
 <?php
 
@@ -66,6 +58,8 @@ foreach ($databases as $v) {
 		</div>
 		<div id="editAssignDiv">
 			<div id="assignCollections"></div>
+			<div id="assignDocuments"></div>
+			<div id="assignUpdateBtn" class="btn btn-success">Update</div>
 		</div>
 	</div>
 <!--
@@ -75,5 +69,20 @@ foreach ($databases as $v) {
 		</div>
 	</div>
  -->
+	<div id="searchBar" class="model invisible">
+		<div class="modal-dialoog" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div id="normalSearch">
+						<h3 class="inline"> Search</h3>
+						<input type="text" name="search" id="search" placeholder="Search fields in documents(Did not work before choose a collection)" />
+						<span id="advanced" class="inline">Advanced</span>
+					</div><!-- END: #normalSearch -->
+					<div id="advancedSearch" style="display: none">
+					</div><!--END: . #advancedInput-->
+				</div>
+			</div>
+		</div>
+	</div><!-- END: #searchBar -->
 </body>
 </html>

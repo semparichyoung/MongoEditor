@@ -25,6 +25,7 @@ $databases = $mongo -> listDatabases();
 	<script src="js/main.js" type="text/javascript" charset="utf-8" async defer></script>
 	<script src="js/sort.js" type="text/javascript" charset="utf-8" async defer></script>
 	<script src="js/shel.js" type="text/javascript" charset="utf-8" async defer></script>
+	<script src="js/search.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
 

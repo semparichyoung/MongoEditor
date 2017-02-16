@@ -1,3 +1,39 @@
+$(function () {
+	$("#DocumentsDiv").on("click", ".documentHeader .field", function(e) {
+		var $t = $(this);
+		if($t.find("input").length > 0 || $t.find("button").length > 0) return true;
+		var $s = $t.find(".glyphicon");
+		var index = $t.index();
+		var inverse;
+		if($s.hasClass("glyphicon-triangle-bottom")) {
+			inverse = true;
+		}else {
+			inverse = false;
+		}
+		$t.closest('table')
+			.find('.document .field')
+			.filter(function(){
+				return $(this).index() === index;
+			})
+		.sortElements(function(a, b){
+			return inverse ? naturalCompare($(a).text(), $(b).text()) : 
+				naturalCompare($(b).text(), $(a).text());
+
+		}, function(){
+			return this.parentNode;
+		});
+
+		$(".documentHeader span").removeClass("glyphicon-triangle-top glyphicon-triangle-bottom");
+		if(!inverse) {
+			$s.addClass("glyphicon-triangle-bottom");
+		}else {
+			$s.addClass("glyphicon-triangle-top");
+		}
+	});
+});
+
+
+
 /**
  * jQuery.fn.sortElements
  * --------------
